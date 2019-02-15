@@ -2,28 +2,33 @@
 from __future__ import unicode_literals
 
 from contextlib import contextmanager
-from pyecharts.js_extensions import EXTENSION_MANAGER
+
 import pyecharts.constants as constants
+from pyecharts.js_extensions import EXTENSION_MANAGER
+
+ONLINE_ASSETS_JS = "https://pyecharts.github.io/assets/js/"
 
 
 class PyEchartsConfig(object):
-
     def __init__(
-        self, echarts_template_dir='.', jshost=None, force_js_embed=False
+        self, echarts_template_dir=".", jshost=None, force_js_embed=False
     ):
         self.echarts_template_dir = echarts_template_dir
         self._jshost = remove_trailing_slashes(jshost)
         self.force_js_embed = force_js_embed
         self.hosted_on_github = False
         self.jupyter_presentation = constants.DEFAULT_HTML
+        self.theme = constants.LIGHT_THEME
 
     @property
     def js_embed(self):
-        """ Determine whether to use embed code in <script> tag.
+        """
+        Determine whether to use embed code in <script> tag.
         """
         if self.force_js_embed:
             return True
-
+        if self.hosted_on_github:
+            return False
         else:
             return self.jshost is None
 
@@ -66,6 +71,10 @@ class PyEchartsConfig(object):
         return contents
 
     def generate_js_link(self, js_names):
+        # self.jshost 为 None 时应该使用远程 js
+        # "https://pyecharts.github.io/assets/js"
+        if not self.jshost:
+            self.jshost = ONLINE_ASSETS_JS
         links = []
         for name in js_names:
             for extension in EXTENSION_MANAGER.get_all_extensions():
@@ -77,12 +86,6 @@ class PyEchartsConfig(object):
         return links
 
     def produce_require_configuration(self, dependencies):
-        """
-
-        :param dependencies:
-        :param jshost:
-        :return:
-        """
         __dependencies__ = _ensure_echarts_is_in_the_front(dependencies)
         # if no nick name register, we treat the location as location.js
         require_conf_items = []
@@ -100,24 +103,18 @@ class PyEchartsConfig(object):
         )
 
     def produce_html_script_list(self, dependencies):
-        """
-
-        :param dependencies:
-        :return:
-        """
         __dependencies__ = _ensure_echarts_is_in_the_front(dependencies)
         script_list = [
-            '%s' % self.get_js_library(key) for key in __dependencies__
+            "%s" % self.get_js_library(key) for key in __dependencies__
         ]
         return script_list
 
 
 def remove_trailing_slashes(jshost):
-    """ Delete the end separator character if exists.
-
-    :param jshost:
     """
-    if jshost and jshost[-1] in ('/', '\\'):
+    Delete the end separator character if exists.
+    """
+    if jshost and jshost[-1] in ("/", "\\"):
         return jshost[:-1]
 
     else:
@@ -133,10 +130,10 @@ def configure(
     echarts_template_dir=None,
     force_js_embed=None,
     output_image=None,
-    **kwargs
+    global_theme=None,
 ):
-    """ Config all items for pyecharts when use chart.render()
-    or page.render().
+    """
+    Config all items for pyecharts when use chart.render() or page.render().
 
     :param jshost: the host for echarts related javascript libraries
     :param echarts_template_dir: the directory for custom html templates
@@ -146,7 +143,6 @@ def configure(
                          Values such as 'svg', 'jpeg', 'png' changes
                          chart presentation in jupyter notebook to those image
                          formats, instead of 'html' format.
-    :param kwargs:
     """
     if jshost:
         CURRENT_CONFIG.jshost = jshost
@@ -158,17 +154,31 @@ def configure(
         CURRENT_CONFIG.force_js_embed = force_js_embed
     if output_image in constants.JUPYTER_PRESENTATIONS:
         CURRENT_CONFIG.jupyter_presentation = output_image
+    if global_theme is not None:
+        CURRENT_CONFIG.theme = global_theme
 
 
 def online(host=None):
-    """ Set the jshost
+    """
+    Set the jshost
 
-    :param host:
+    :param host: remote js host
     """
     if host is None:
         configure(hosted_on_github=True)
     else:
         configure(jshost=host)
+
+
+def enable_nteract(host=None):
+    # self.jshost 为 None 时应该使用远程 js
+    # "https://pyecharts.github.io/assets/js"
+    _host = ONLINE_ASSETS_JS
+    if host:
+        _host = host
+    configure(
+        output_image=constants.NTERACT, jshost=remove_trailing_slashes(_host)
+    )
 
 
 @contextmanager
@@ -186,16 +196,14 @@ def jupyter_image(jupyter_presentation):
 
 
 def _ensure_echarts_is_in_the_front(dependencies):
-    """ make sure echarts is the item in the list
+    """
+    make sure echarts is the item in the list
     require(['echarts'....], function(ec) {..}) need it to
     be first but dependencies is a set so has no sequence
-
-    :param dependencies:
-    :return:
     """
     if len(dependencies) > 1:
-        dependencies.remove('echarts')
-        dependencies = ['echarts'] + list(dependencies)
+        dependencies.remove("echarts")
+        dependencies = ["echarts"] + list(dependencies)
     elif len(dependencies) == 1:
         # make a new list
         dependencies = list(dependencies)

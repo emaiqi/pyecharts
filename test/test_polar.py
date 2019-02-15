@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 
 import math
 import random
+from test.constants import WEEK, X_TIME
 
 from pyecharts import Polar
-from test.constants import WEEK
 
 
 def test_polar_type_scatter_one():
@@ -16,7 +16,7 @@ def test_polar_type_scatter_one():
         "",
         data,
         boundary_gap=False,
-        type='scatter',
+        type="scatter",
         is_splitline_show=False,
         is_axisline_show=True,
     )
@@ -27,15 +27,15 @@ def test_polar_type_scatter_more():
     data_1 = [(10, random.randint(1, 100)) for i in range(300)]
     data_2 = [(11, random.randint(1, 100)) for i in range(300)]
     polar = Polar("极坐标系-散点图示例", width=1200, height=600)
-    polar.add("", data_1, type='scatter')
-    polar.add("", data_2, type='scatter')
+    polar.add("", data_1, type="scatter")
+    polar.add("", data_2, type="scatter")
     polar.render()
 
 
 def test_polar_type_effectscatter():
     data = [(i, random.randint(1, 100)) for i in range(10)]
     polar = Polar("极坐标系-动态散点图示例", width=1200, height=600)
-    polar.add("", data, type='effectScatter', effect_scale=10, effect_period=5)
+    polar.add("", data, type="effectScatter", effect_scale=10, effect_period=5)
     assert '"type": "effectScatter"' in polar._repr_html_()
 
 
@@ -45,21 +45,21 @@ def test_polar_type_barradius():
         "A",
         [1, 2, 3, 4, 3, 5, 1],
         radius_data=WEEK,
-        type='barRadius',
+        type="barRadius",
         is_stack=True,
     )
     polar.add(
         "B",
         [2, 4, 6, 1, 2, 3, 1],
         radius_data=WEEK,
-        type='barRadius',
+        type="barRadius",
         is_stack=True,
     )
     polar.add(
         "C",
         [1, 2, 3, 4, 1, 2, 5],
         radius_data=WEEK,
-        type='barRadius',
+        type="barRadius",
         is_stack=True,
     )
     polar.render()
@@ -70,22 +70,22 @@ def test_polar_type_barangle():
     polar.add(
         "",
         [1, 2, 3, 4, 3, 5, 1],
-        radius_data=WEEK,
-        type='barAngle',
+        angle_data=WEEK,
+        type="barAngle",
         is_stack=True,
     )
     polar.add(
         "",
         [2, 4, 6, 1, 2, 3, 1],
-        radius_data=WEEK,
-        type='barAngle',
+        anglle_data=WEEK,
+        type="barAngle",
         is_stack=True,
     )
     polar.add(
         "",
         [1, 2, 3, 4, 1, 2, 5],
-        radius_data=WEEK,
-        type='barAngle',
+        angle_data=WEEK,
+        type="barAngle",
         is_stack=True,
     )
     polar.render()
@@ -146,7 +146,7 @@ def test_polar_draw_snail():
         "",
         data,
         symbol_size=0,
-        symbol='circle',
+        symbol="circle",
         start_angle=-25,
         is_radiusaxis_show=False,
         area_color="#f3c5b3",
@@ -154,3 +154,44 @@ def test_polar_draw_snail():
         is_angleaxis_show=False,
     )
     polar.render()
+
+
+def test_polor_custom_type():
+    def render_item(params, api):
+        values = [api.value(0), api.value(1)]
+        coord = api.coord(values)
+        size = api.size([1, 1], values)
+        return {
+            "type": "sector",
+            "shape": {
+                "cx": params.coordSys.cx,
+                "cy": params.coordSys.cy,
+                "r0": coord[2] - size[0] / 2,
+                "r": coord[2] + size[0] / 2,
+                "startAngle": coord[3] - size[1] / 2,
+                "endAngle": coord[3] + size[1] / 2,
+            },
+            "style": api.style({"fill": api.visual("color")}),
+        }
+
+    polar = Polar("自定义渲染逻辑示例", width=1200, height=600)
+    polar.add(
+        "",
+        [
+            [
+                random.randint(0, 6),
+                random.randint(1, 24),
+                random.randint(1, 24),
+            ]
+            for _ in range(100)
+        ],
+        render_item=render_item,
+        type="custom",
+        angle_data=X_TIME,
+        radius_data=WEEK,
+        is_visualmap=True,
+        visual_range=[0, 30],
+    )
+    html_content = polar._repr_html_()
+    assert "function render_item(params, api) {" in html_content
+    assert '"type": "custom"' in html_content

@@ -2,9 +2,11 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-from pyecharts import Line
+import math
+import random
 from test.constants import CLOTHES, WEEK
 
+from pyecharts import Line
 
 clothes_v1 = [5, 20, 36, 10, 10, 100]
 clothes_v2 = [55, 60, 16, 20, 15, 80]
@@ -51,15 +53,15 @@ def test_line_user_define_marks():
         clothes_v1,
         mark_point=["average", "max", "min"],
         symbol_size=50,
-        mark_point_symbol='diamond',
-        mark_point_textcolor='#40ff27',
+        mark_point_symbol="diamond",
+        mark_point_textcolor="#40ff27",
     )
     line.add(
         "商家B",
         CLOTHES,
         clothes_v2,
         mark_point=["average", "max", "min"],
-        mark_point_symbol='arrow',
+        mark_point_symbol="arrow",
         mark_point_symbolsize=40,
     )
     assert '"symbolSize":50' not in line._repr_html_()
@@ -113,7 +115,7 @@ def test_line_type_fil():
         CLOTHES,
         clothes_v2,
         is_fill=True,
-        area_color='#000',
+        area_color="#000",
         area_opacity=0.3,
         is_smooth=True,
     )
@@ -121,9 +123,6 @@ def test_line_type_fil():
 
 
 def test_line_log_yaxis():
-    import math
-    import random
-
     line = Line("折线图示例")
     line.add(
         "商家A",
@@ -137,3 +136,21 @@ def test_line_log_yaxis():
         yaxis_type="log",
     )
     line.render()
+
+
+def test_line_mark_point_raw():
+    line = Line()
+    line.add(
+        "商家A",
+        CLOTHES,
+        clothes_v1,
+        mark_point_raw=[
+            {
+                "name": "rawData",
+                "symbol": "pin",
+                "coord": ["衬衫", 5],
+                "value": 5,
+            }
+        ],
+    )
+    assert line.options.get("series")[0]["markLine"]["data"] == []

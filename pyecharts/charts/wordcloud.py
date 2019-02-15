@@ -1,18 +1,26 @@
 # coding=utf-8
 import random
+
 from pyecharts.chart import Chart
 
-
 SHAPES = (
-    "cardioid", "diamond", "triangle-forward", "triangle", "pentagon", "star"
+    "cardioid",
+    "diamond",
+    "triangle-forward",
+    "triangle",
+    "pentagon",
+    "star",
 )
 
 
 def gen_color():
-    """ 为词云图生成随机颜色
+    """
+    为词云图生成随机颜色
     """
     return "rgb(%s,%s,%s)" % (
-        random.randint(0, 160), random.randint(0, 160), random.randint(0, 160)
+        random.randint(0, 160),
+        random.randint(0, 160),
+        random.randint(0, 160),
     )
 
 
@@ -23,10 +31,11 @@ class WordCloud(Chart):
 
     def __init__(self, title="", subtitle="", **kwargs):
         super(WordCloud, self).__init__(title, subtitle, **kwargs)
-        self._js_dependencies.add('wordcloud')
+        self._js_dependencies.add("wordcloud")
 
     def add(self, *args, **kwargs):
         self.__add(*args, **kwargs)
+        return self
 
     def __add(
         self,
@@ -80,7 +89,7 @@ class WordCloud(Chart):
         else:
             shape = "circle"
 
-        self._option.get('series').append(
+        self._option.get("series").append(
             {
                 "type": "wordCloud",
                 "name": name,

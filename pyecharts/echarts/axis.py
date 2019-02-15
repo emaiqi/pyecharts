@@ -4,7 +4,6 @@ from pyecharts.echarts.json_serializable import JsonSerializable
 
 
 class AxisLabel(JsonSerializable):
-
     def __init__(
         self,
         interval=None,
@@ -14,7 +13,7 @@ class AxisLabel(JsonSerializable):
         text_color=None,
         formatter=None,
     ):
-        self.config = {
+        self._config = {
             "interval": interval,
             "formatter": formatter,
             "rotate": rotate,
@@ -24,13 +23,11 @@ class AxisLabel(JsonSerializable):
 
 
 class XAxisLabel(AxisLabel):
-
     def __init__(self, **kwargs):
         super(XAxisLabel, self).__init__(**kwargs)
 
 
 class YAxisLabel(AxisLabel):
-
     def __init__(self, formatter=None, **kwargs):
         if not isinstance(formatter, types.FunctionType):
             formatter = "{value} " + formatter
@@ -38,12 +35,11 @@ class YAxisLabel(AxisLabel):
 
 
 class Axis(JsonSerializable):
-
     def __init__(
         self,
         name=None,
         visibility=True,
-        name_location='end',
+        name_location="end",
         name_gap=15,
         name_size=12,
         position=None,
@@ -53,9 +49,11 @@ class Axis(JsonSerializable):
         split_line=True,
         value_range=None,
         axis_type="value",
+        axis_line_color=None,
+        axis_line_width=1,
         chart_type=None,
     ):
-        self.config = {
+        self._config = {
             "name": name,
             "show": visibility,
             "nameLocation": name_location,
@@ -69,23 +67,31 @@ class Axis(JsonSerializable):
             "max": value_range[1],
             "type": axis_type,
             "splitLine": {"show": split_line},
+            "axisLine": {
+                "lineStyle": {
+                    "color": axis_line_color,
+                    "width": axis_line_width,
+                }
+            },
         }
 
 
 class XAxis(Axis):
-
-    def __init__(self, axis_type=None, chart_type=None, **kwargs):
+    def __init__(
+        self, axis_type=None, chart_type=None, split_line=False, **kwargs
+    ):
         if axis_type is None:
             if chart_type == "scatter":
                 axis_type = "value"
             else:
                 axis_type = "category"
 
-        super(XAxis, self).__init__(axis_type=axis_type, **kwargs)
+        super(XAxis, self).__init__(
+            axis_type=axis_type, split_line=split_line, **kwargs
+        )
 
 
 class YAxis(Axis):
-
     def __init__(self, axis_type=None, **kwargs):
         if axis_type is None:
             axis_type = "value"

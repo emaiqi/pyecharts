@@ -15,6 +15,7 @@ class Bar(Chart):
 
     def add(self, *args, **kwargs):
         self.__add(*args, **kwargs)
+        return self
 
     def __add(
         self,
@@ -42,24 +43,24 @@ class Bar(Chart):
         chart = self._get_all_options(**kwargs)
 
         if is_stack:
-            is_stack = "stack_" + str(self._option['series_id'])
+            is_stack = "stack_" + str(self._option["series_id"])
         else:
             is_stack = ""
-        xaxis, yaxis = chart['xy_axis']
+        xaxis, yaxis = chart["xy_axis"]
         self._option.update(xAxis=xaxis, yAxis=yaxis)
-        self._option.get('legend')[0].get('data').append(name)
+        self._option.get("legend")[0].get("data").append(name)
 
-        self._option.get('series').append(
+        self._option.get("series").append(
             {
                 "type": "bar",
                 "name": name,
                 "data": y_axis,
                 "stack": is_stack,
                 "barCategoryGap": bar_category_gap,
-                "label": chart['label'],
-                "markPoint": chart['mark_point'],
-                "markLine": chart['mark_line'],
-                "seriesId": self._option.get('series_id'),
+                "label": chart["label"],
+                "markPoint": chart["mark_point"],
+                "markLine": chart["mark_line"],
+                "seriesId": self._option.get("series_id"),
             }
         )
         self._config_components(**kwargs)

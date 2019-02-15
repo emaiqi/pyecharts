@@ -3,9 +3,9 @@
 from __future__ import unicode_literals
 
 import random
+from test.constants import X_TIME, Y_WEEK
 
 from pyecharts import HeatMap
-from test.constants import X_TIME, Y_WEEK
 
 
 def test_heatmap_default():
@@ -18,13 +18,15 @@ def test_heatmap_default():
         data,
         is_visualmap=True,
         visual_text_color="#000",
-        visual_orient='horizontal',
-        xaxis_name='XNAME',
-        yaxis_name='YNAME',
-        yaxis_name_pos='end',
+        visual_orient="horizontal",
+        xaxis_name="XNAME",
+        yaxis_name="YNAME",
+        yaxis_name_pos="end",
         yaxis_name_gap=5,
     )
-    heatmap.render()
+    html_content = heatmap._repr_html_()
+    assert "Saturday" in html_content
+    assert "Monday" in html_content
 
 
 def test_heatmap_calendar():
@@ -41,10 +43,10 @@ def test_heatmap_calendar():
         "",
         data,
         is_calendar_heatmap=True,
-        visual_text_color='#000',
-        visual_range_text=['', ''],
+        visual_text_color="#000",
+        visual_range_text=["", ""],
         visual_range=[1000, 25000],
-        calendar_cell_size=['auto', 30],
+        calendar_cell_size=["auto", 30],
         is_visualmap=True,
         calendar_date_range="2017",
         visual_orient="horizontal",

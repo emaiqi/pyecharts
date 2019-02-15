@@ -5,9 +5,11 @@ Test cases for rendering in jupyter notebook
 from __future__ import unicode_literals
 
 import json
-
-from pyecharts import Bar, Line, Pie, Page, online
 from test.constants import CLOTHES, WEEK
+
+import pyecharts.constants as constants
+from pyecharts import Bar, Line, Page, Pie, configure, enable_nteract, online
+from pyecharts.conf import CURRENT_CONFIG
 
 TITLE = "柱状图数据堆叠示例"
 
@@ -39,7 +41,7 @@ def test_single_chart():
 def test_page():
     page = Page()
     line = Line("折线图示例")
-    line.chart_id = 'id_my_cell_line'
+    line.chart_id = "id_my_cell_line"
     line.add(
         "最高气温",
         WEEK,
@@ -57,7 +59,7 @@ def test_page():
 
     # pie
     v1 = [11, 12, 13, 10, 10, 10]
-    pie = Pie("饼图-圆环图示例", title_pos='center', width='600px')
+    pie = Pie("饼图-圆环图示例", title_pos="center", width="600px")
     pie.add(
         "",
         CLOTHES,
@@ -65,23 +67,23 @@ def test_page():
         radius=[40, 75],
         label_text_color=None,
         is_label_show=True,
-        legend_orient='vertical',
-        legend_pos='left',
+        legend_orient="vertical",
+        legend_pos="left",
     )
 
     page.add([line, pie, create_a_bar(TITLE)])
     # Start render and test
     html = page._repr_html_()
     # Test base html structure
-    assert html.count('<script>') == html.count('</script>') == 2
-    assert html.count('<div') == html.count('</div>') == 3
+    assert html.count("<script>") == html.count("</script>") == 2
+    assert html.count("<div") == html.count("</div>") == 3
     assert html.count("require.config") == html.count("function(echarts)") == 1
     # Test some chart attributes
     json_encoded_title = json.dumps(TITLE)
     assert json_encoded_title in html
     assert "nbextensions/echarts" in html  # default jshost
     assert html.count("height:400px") == 3
-    assert html.count('width:600px') == 1
+    assert html.count("width:600px") == 1
     assert html.count("width:800px") == 2
     assert html.count("id_my_cell_line") == 6
 
@@ -90,13 +92,27 @@ def test_online_feature():
     online()
     bar = create_a_bar(TITLE)
     html = bar._repr_html_()
-    expected_jshost = 'https://pyecharts.github.io/jupyter-echarts/echarts'
+    expected_jshost = "https://pyecharts.github.io/jupyter-echarts/echarts"
     assert expected_jshost in html
+    CURRENT_CONFIG.hosted_on_github = False
 
 
 def test_online_with_custom_jshost():
-    online(host='https://my-site.com/js')
+    online(host="https://my-site.com/js")
     bar = create_a_bar(TITLE)
     html = bar._repr_html_()
-    expected_jshost = 'https://my-site.com/js'
+    expected_jshost = "https://my-site.com/js"
     assert expected_jshost in html
+    CURRENT_CONFIG.jshost = None
+
+
+def test_nteract_feature():
+    enable_nteract()
+    bar = create_a_bar(TITLE)
+    html = bar._repr_html_()
+    assert "https://pyecharts.github.io/assets/js/echarts.min.js" in html
+    assert "require" not in html
+    # restore configuration
+    configure(output_image=constants.DEFAULT_HTML)
+    CURRENT_CONFIG.jshost = None
+    CURRENT_CONFIG.hosted_on_github = False

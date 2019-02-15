@@ -1,4 +1,5 @@
 # coding=utf-8
+import warnings
 
 from pyecharts.chart import Chart
 
@@ -13,7 +14,7 @@ class Radar(Chart):
     def __init__(self, title="", subtitle="", **kwargs):
         super(Radar, self).__init__(title, subtitle, **kwargs)
 
-    def config(
+    def set_radar_component(
         self,
         schema=None,
         c_schema=None,
@@ -54,17 +55,44 @@ class Radar(Chart):
                 "shape": shape,
                 "name": {
                     "textStyle": {
-                        "color": radar_text_color, "fontSize": radar_text_size
+                        "color": radar_text_color,
+                        "fontSize": radar_text_size,
                     }
                 },
-                "splitLine": chart['split_line'],
-                "splitArea": chart['split_area'],
-                "axisLine": chart['axis_line'],
+                "splitLine": chart["split_line"],
+                "splitArea": chart["split_area"],
+                "axisLine": chart["axis_line"],
             }
+        )
+        return self
+
+    def config(
+        self,
+        schema=None,
+        c_schema=None,
+        shape="",
+        radar_text_color="#333",
+        radar_text_size=12,
+        **kwargs
+    ):
+        """The old alias for set_schema.
+        """
+        deprecated_tpl = "The {} is deprecated, please use {} instead!"
+        warnings.warn(
+            deprecated_tpl.format("config", "set_schema"), DeprecationWarning
+        )
+        return self.set_radar_component(
+            schema=schema,
+            c_schema=c_schema,
+            shape=shape,
+            radar_text_color=radar_text_color,
+            radar_text_size=radar_text_size,
+            **kwargs
         )
 
     def add(self, *args, **kwargs):
         self.__add(*args, **kwargs)
+        return self
 
     def __add(self, name, value, item_color=None, **kwargs):
         """
@@ -77,20 +105,20 @@ class Radar(Chart):
             指定单图例颜色
         :param kwargs:
         """
-        kwargs.update(flag=True, type='radar')
+        kwargs.update(flag=True, type="radar")
         chart = self._get_all_options(**kwargs)
-        self._option.get('legend')[0].get('data').append(name)
+        self._option.get("legend")[0].get("data").append(name)
 
-        self._option.get('series').append(
+        self._option.get("series").append(
             {
                 "type": "radar",
                 "name": name,
                 "data": value,
-                "symbol": chart['symbol'],
-                "label": chart['label'],
+                "symbol": chart["symbol"],
+                "label": chart["label"],
                 "itemStyle": {"normal": {"color": item_color}},
-                "lineStyle": chart['line_style'],
-                "areaStyle": chart['area_style'],
+                "lineStyle": chart["line_style"],
+                "areaStyle": chart["area_style"],
             }
         )
         self._config_components(**kwargs)

@@ -2,13 +2,14 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-from pyecharts import Bar, Line, Scatter, EffectScatter, Kline
-from pyecharts import Overlap
 from test.constants import CLOTHES
+
+from pyecharts import NULL, Bar, EffectScatter, Kline, Line, Overlap, Scatter
+from pyecharts.utils import Passport
 
 
 def test_overlap_bar_line():
-    attr = ['A', 'B', 'C', 'D', 'E', 'F']
+    attr = ["A", "B", "C", "D", "E", "F"]
     v1 = [10, 20, 30, 40, 50, 60]
     v2 = [38, 28, 58, 48, 78, 68]
     bar = Bar("Line-Bar 示例")
@@ -32,7 +33,7 @@ def test_overlap_es_scatter():
     scatter = Scatter()
     scatter.add("scatter", v1, v3)
     es_1 = EffectScatter()
-    es_1.add("es_1", v1, v4, symbol='pin', effect_scale=5)
+    es_1.add("es_1", v1, v4, symbol="pin", effect_scale=5)
 
     overlap = Overlap()
     overlap.add(es)
@@ -122,3 +123,16 @@ def test_line_es():
     overlap.add(line)
     overlap.add(es)
     overlap.render()
+
+
+def test_not_set_in_overlap():
+    attr = ["A", "B", "C", "D", "E", "F"]
+    v1 = [10, 20, 30, 40, 50, 60]
+    line = Line()
+    line.add("line", attr, v1)
+    line._option["series"][0]["symbol"] = NULL
+
+    overlap = Overlap()
+    overlap.add(line)
+
+    assert isinstance(overlap._option["series"][0]["symbol"], Passport)

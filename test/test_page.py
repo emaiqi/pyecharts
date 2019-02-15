@@ -1,19 +1,58 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-import json
 import codecs
-from test.constants import RANGE_COLOR, CLOTHES, WEEK
+import json
+import random
+import sys
+from test.constants import CLOTHES, RANGE_COLOR, WEEK
+
+from mock import MagicMock
+from nose.tools import assert_list_equal, eq_, raises
 from pyecharts import (
-    Bar, Scatter3D, Line, Pie, Map, Kline, Radar, WordCloud, Liquid
+    Bar,
+    Kline,
+    Line,
+    Liquid,
+    Map,
+    Page,
+    Pie,
+    Radar,
+    Scatter3D,
+    WordCloud,
 )
-from pyecharts import Page
-from nose.tools import eq_, raises
 
 TEST_PAGE_TITLE = "my awesome chart"
 
+PY36 = sys.version_info >= (3, 6)
 
-def create_three():
+
+def test_page_init():
+    line = MagicMock(page_title="Line-Chart")
+    bar = MagicMock(page_title="Bar-Chart")
+    page = Page(line=line, bar=bar)
+    eq_("Line-Chart", page["line"].page_title)
+    assert "line" in page
+    assert "bar" in page
+    if PY36:
+        eq_("Line-Chart", page[0].page_title)
+
+
+def test_page_add_chart():
+    nc = (
+        Page()
+        .add_chart(MagicMock(page_title="Line-Chart"), name="line")
+        .add_chart(MagicMock(page_title="Bar-Chart"))
+    )
+    nc["map"] = MagicMock(page_title="Map-Chart")
+    eq_("Line-Chart", nc["line"].page_title)
+    eq_("Bar-Chart", nc["c1"].page_title)
+    assert_list_equal(
+        ["Line-Chart", "Bar-Chart", "Map-Chart"], [c.page_title for c in nc]
+    )
+
+
+def create_three_charts():
     page = Page(page_title=TEST_PAGE_TITLE)
 
     # bar
@@ -25,8 +64,6 @@ def create_three():
     page.add(bar)
 
     # scatter3D
-    import random
-
     data = [
         [
             random.randint(0, 100),
@@ -41,15 +78,15 @@ def create_three():
 
     # guangdong
     value = [20, 190, 253, 77, 65]
-    attr = ['汕头市', '汕尾市', '揭阳市', '阳江市', '肇庆市']
+    attr = ["汕头市", "汕尾市", "揭阳市", "阳江市", "肇庆市"]
     map = Map("广东地图示例", width=1200, height=600)
     map.add(
         "",
         attr,
         value,
-        maptype='广东',
+        maptype="广东",
         is_visualmap=True,
-        visual_text_color='#000',
+        visual_text_color="#000",
     )
     page.add(map)
 
@@ -58,14 +95,14 @@ def create_three():
 
 @raises(NotImplementedError)
 def test_no_image_rendering_for_page():
-    page = create_three()
-    page.render(path='page.png')
+    page = create_three_charts()
+    page.render(path="page.png")
 
 
 def test_two_bars():
-    page = create_three()
+    page = create_three_charts()
     page.render()
-    with codecs.open('render.html', 'r', 'utf-8') as f:
+    with codecs.open("render.html", "r", "utf-8") as f:
         actual_content = f.read()
         assert json.dumps("柱状图数据堆叠示例") in actual_content
         assert "<html>" in actual_content
@@ -73,42 +110,42 @@ def test_two_bars():
         # test the optimization
         assert "registerMap('china'," not in actual_content
         assert "registerMap('world'," not in actual_content
-        echarts_position = actual_content.find('exports.echarts')
-        guangdong_position = actual_content.find(json.dumps('广东'))
+        echarts_position = actual_content.find("exports.echarts")
+        guangdong_position = actual_content.find(json.dumps("广东"))
         assert echarts_position < guangdong_position
 
 
 def test_page_get_js_dependencies():
-    page = create_three()
+    page = create_three_charts()
     dependencies = page.get_js_dependencies()
-    eq_(dependencies[0], 'echarts.min')
-    assert 'guangdong' in dependencies
-    assert 'echarts-gl.min' in dependencies
+    eq_(dependencies[0], "echarts.min")
+    assert "guangdong" in dependencies
+    assert "echarts-gl.min" in dependencies
     eq_(len(dependencies), 3)
 
 
 def test_page_embed():
-    page = create_three()
+    page = create_three_charts()
     html = page.render_embed()
-    assert '<html>' not in html
+    assert "<html>" not in html
     assert json.dumps("柱状图数据堆叠示例") in html
 
 
 def test_page_in_notebook():
-    page = create_three()
+    page = create_three_charts()
     html = page._repr_html_()
 
-    assert 'echartsgl' in html
-    assert 'echarts' in html
-    assert 'guangdong' in html
+    assert "echartsgl" in html
+    assert "echarts" in html
+    assert "guangdong" in html
     # find the appearing postion of echarts.min in html
-    echarts_position = html.find('echarts.min')
+    echarts_position = html.find("echarts.min")
     # find the appearing postion of guangdong in html
-    guangdong_position = html.find('guangdong')
+    guangdong_position = html.find("guangdong")
     assert echarts_position < guangdong_position
 
 
-def test_more():
+def test_more_charts():
     page = Page()
 
     # line
@@ -130,7 +167,7 @@ def test_more():
 
     # pie
     v1 = [11, 12, 13, 10, 10, 10]
-    pie = Pie("饼图-圆环图示例", title_pos='center')
+    pie = Pie("饼图-圆环图示例", title_pos="center")
     pie.add(
         "",
         CLOTHES,
@@ -138,8 +175,8 @@ def test_more():
         radius=[40, 75],
         label_text_color=None,
         is_label_show=True,
-        legend_orient='vertical',
-        legend_pos='left',
+        legend_orient="vertical",
+        legend_pos="left",
     )
 
     page.add([line, pie])
@@ -206,13 +243,11 @@ def test_more():
         v2,
         label_color=["#4e79a7"],
         is_area_show=False,
-        legend_selectedmode='single',
+        legend_selectedmode="single",
     )
     page.add(radar)
 
     # scatter3d
-    import random
-
     data = [
         [
             random.randint(0, 100),
@@ -227,26 +262,26 @@ def test_more():
 
     # wordcloud
     name = [
-        'Sam S Club',
-        'Macys',
-        'Amy Schumer',
-        'Jurassic World',
-        'Charter Communications',
-        'Chick Fil A',
-        'Planet Fitness',
-        'Pitch Perfect',
-        'Express',
-        'Home',
-        'Johnny Depp',
-        'Lena Dunham',
-        'Lewis Hamilton',
-        'KXAN',
-        'Mary Ellen Mark',
-        'Farrah Abraham',
-        'Rita Ora',
-        'Serena Williams',
-        'NCAA baseball tournament',
-        'Point Break',
+        "Sam S Club",
+        "Macys",
+        "Amy Schumer",
+        "Jurassic World",
+        "Charter Communications",
+        "Chick Fil A",
+        "Planet Fitness",
+        "Pitch Perfect",
+        "Express",
+        "Home",
+        "Johnny Depp",
+        "Lena Dunham",
+        "Lewis Hamilton",
+        "KXAN",
+        "Mary Ellen Mark",
+        "Farrah Abraham",
+        "Rita Ora",
+        "Serena Williams",
+        "NCAA baseball tournament",
+        "Point Break",
     ]
     value = [
         10000,
@@ -280,8 +315,50 @@ def test_more():
     page.add(liquid)
     assert len(page) == 7
     assert isinstance(page[0], Line)
-    assert (
-        ('echarts' in page.js_dependencies)
-        or ('echarts.min' in page.js_dependencies)
+    assert ("echarts" in page.js_dependencies) or (
+        "echarts.min" in page.js_dependencies
     )
     page.render()
+
+
+def test_page_extra_html_text_label():
+    page = Page()
+    line = Line(
+        "折线图示例", extra_html_text_label=["LINE TEXT LABEL", "color:red"]
+    )
+    line.add(
+        "最高气温",
+        WEEK,
+        [11, 11, 15, 13, 12, 13, 10],
+        mark_point=["max", "min"],
+        mark_line=["average"],
+    )
+    page.add(line)
+
+    v1 = [11, 12, 13, 10, 10, 10]
+    pie = Pie(
+        "饼图-圆环图示例",
+        title_pos="center",
+        extra_html_text_label=["PIE TEXT LABEL"],
+    )
+    pie.add(
+        "",
+        CLOTHES,
+        v1,
+        radius=[40, 75],
+        label_text_color=None,
+        is_label_show=True,
+        legend_orient="vertical",
+        legend_pos="left",
+    )
+    page.add(pie)
+
+    v2 = [10, 25, 8, 60, 20, 80]
+    bar = Bar("柱状图", extra_html_text_label=["BAR TEXT LABEL"])
+    bar.add("商家B", CLOTHES, v2)
+    page.add(bar)
+
+    html_content = page._repr_html_()
+    assert '<p style="">BAR TEXT LABEL</p>' in html_content
+    assert '<p style="color:red">LINE TEXT LABEL</p>' in html_content
+    assert '<p style="">PIE TEXT LABEL</p>' in html_content

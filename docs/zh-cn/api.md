@@ -16,7 +16,6 @@
 | 8 写入目标文件 | `write_utf8_html_file('my_demo_chart.html', html)` |      |
 
 
-
 ## pyecharts 配置项
 
 pyecharts 遵循 “先配置后使用” 的基本原则，所有的配置项将统一于类 `pyecharts.conf.PyEChartsConfig` 类中。
@@ -25,28 +24,36 @@ pyecharts 遵循 “先配置后使用” 的基本原则，所有的配置项�
 
 ```python
 import pyecharts
-pyecharts.configure(P1=V1, P2=V2,...)
+pyecharts.configure(
+    jshost=None,
+    echarts_template_dir=None,
+    force_js_embed=None,
+    output_image=None,
+    global_theme=None
+)
 ```
 
-### 配置列表
-
-**echarts_template_dir**
-
-模板文件目录，默认值：'.'（当前目录）。用于自定义模板文件，即 `render` 的 template_name 参数构成全部的路径。
-
-**jshost**
-
+* jshost
 js 文件仓库路径。可以设置本地或者远程地址。所有的远程地址必须以 `http://` 或者 `https://` 开头。  
 也可以使用 `pyecharts.online()` 函数设置此选项。  
 为了保持兼容性， jshost 并不是必须使用 '/' 等分隔符作为结尾。
 
-**force_js_embed**
+* echarts_template_dir
+模板文件目录，默认值：'.'（当前目录）。用于自定义模板文件，即 `render` 的 template_name 参数构成全部的路径。
 
+* force_js_embed
 是否强制采用内部嵌入方式渲染js文件标签， `echarts_js_dependencies`  模板函数受此影响，具体可参考该函数。
+
+* output_image
+指定输出图片类型，有 'svg', 'jpeg', 'png' 可选
+
+* global_theme
+指定全局主题，目前提供的主题有 `dark`, `vintage`, `macarons`, `infographic`, `shine` 和 `roma`。
+
 
 ## 图表类
 
-图表类是 pyecharts 库中最为核心的内容，每一个类代表了 [Echarts](http://echarts.baidu.com/) 中一个图表类型。下表显示了这些图表的继承体系。
+图表类是 pyecharts 库中最为核心的内容，每一个类代表了 [ECharts](http://echarts.baidu.com/) 中一个图表类型。下表显示了这些图表的继承体系。
 
 ![class-relationship-diagram](https://raw.githubusercontent.com/chenjiandongx/pyecharts/master/images/class-relationship-diagram.png)
 
@@ -78,7 +85,7 @@ js 文件仓库路径。可以设置本地或者远程地址。所有的远程�
 
 **options**
 
-字典类型(dict)，Echarts 图表配置。不同图表类型具有不同数据格式。具体请参考 ECharts 文档。
+字典类型(dict)，ECharts 图表配置。不同图表类型具有不同数据格式。具体请参考 ECharts 文档。
 
 **js_dependencies**
 
@@ -104,7 +111,9 @@ js 文件仓库路径。可以设置本地或者远程地址。所有的远程�
 
 添加 [事件处理函数](http://echarts.baidu.com/api.html#events)。
 
-请注意，事件处理函数是在浏览器里运行，但是要求你用 Python 写哦。
+* event_name：事件名称
+* handler：回调函数
+
 
 这是支持的所有事件
 
@@ -150,7 +159,7 @@ BRUSH_SELECTED = 'brushselected'
 
 ``` python
 def handler(params):
-    ...
+    pass
 ```
 
 此处 params 的结构与 echarts 的一模一样：
@@ -233,55 +242,70 @@ map.render()
 打印全部 options 属性。自 v0.3.3 起。已废弃，应当使用 `print_echarts_options` 。
 
 
-## 多图表
+## 多图表 Page
 
-`pyecharts.custom.page.Page` 用于在同一页面显示多个图表，也拥有上述的属性和方法。
+> 在 v0.5.4 变更，重写内部实现，新增图表命名名称。
 
-同时 `Page` 类继承自 `list` ，因此也支持长度计算(len)、迭代(iter)、索引(index)、切片(slice)、添加(append)、扩展(extend)等操作。
+### 基本使用
 
-例子：按顺序打印 page 中每个图表的 echarts 选项字典。
+由于无论是 Jinja2 模板还是 Django 模板，均不提倡使用 `{{ charts.1 }}` 形式访问列表中的某一个元素。因此在 v0.5.4 对 Page 进行重构，新增图表命名名称。
+
+在创建一个 `Page` 实例 page ，后，使用 `add_chart` 添加一个图表对象，可以使用 name 为之起一个引用名称。
+
 
 ```python
+
+from pyecharts import Page, Line, Bar
+
 page = Page()
 line = Line('Demo Line')
 # ... Add data to line
-page.add(line)
-kline = KLine('Demo kline')
-# ... Add data to kline
-page.append(kline)
-
-for chart in page:
-    chart.show_config()
+page.add_chart(line, name='line')
+bar = Bar('Demo kline')
+# ... Add data to bar
+page.add_chart(bar)
 ```
 
-## 数据处理工具
+图表访问方式
 
-以下几个方法为数据处理的类方法，
+| 项目 | Python 代码 | 模板代码 |
+| ------ | ------ | ------ |
+| line 实例 | `print(page['line'])` | `{{ page.line }}` |
+| bar 实例 | `print(page['c1'])` | `{{ page.c1 }}` |
 
-**cast**
+### 方法列表
 
-`pyecharts.base.Base.cast(seq)`
+在创建一个 page 实例后，可以通过各种方法将现有的图表实例添加到该实例中。
 
-数据格式化处理函数，能够将源数据转化为符合 pyecharts 的数据。
+> Page 不再具有 list 的全部特性，因此 切片(slice)、添加(append)、扩展(extend) 等方法不再支持。
 
-例子:
+**`__init__(page_title, **name_chart_pair)`**
 
-```python
-o_data = [('A', '34'), ('B', '45'), ('C', '12')]
-x, y = Base.cast(o_data)
-print(x) # ['A', 'B', 'C']
-print(y) # ['34', '45', '12']
-```
+构造函数，使用 `{<name>:<chart>}` 创建实例。根据 [PEP 468](https://www.python.org/dev/peps/pep-0468/)，仅在 Python 3.6+ 同时保证其顺序。
 
-**json_dumps**
+**`add_chart(chart, name=None)`**
 
-`pyecharts.utils.json_dumps(data, indent=0)`
+v0.5.4 新增，可链式使用。添加一个图表对象，如果如果没有指定  `name` 参数，默认使用类似 `'c0'` ，`'c1'` 等字符串命名。
 
-将 data 转换为 JSON 字符串，和默认的 `json.dumps` 方法增加了：
+**`add(achart_or_charts)`**
 
-- 将日期和时间转化为 ISO8601 字符串
-- 对于 numpy 数组，增加了类型强制转化，可参考 [astype](https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.astype.html) 和 [tolist](https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.tolist.html) .
+可链式使用。添加一个或多个图表对象，该函数使用默认的名称。
 
+**`cls.from_charts(*charts)`**
+
+从一个或多个图表实例，创建一个 `Page` 实例。
+
+### 图表方法
+
+准确来说， `Page` 并不是 ECharts 中的图表类型，所包含的图表也并不要求具有相关性。为了方便， `Page` 也具有相关的属性方法，包括：
+
+- `page_title`
+- `js_dependencies`
+- `render_embed()`
+- `get_js_dependencies()`
+- `_repr_html_()`
+
+这些方法的使用方法同 `Base` 类。
 
 ## 模板引擎
 
@@ -319,6 +343,15 @@ EChartsEnvironment 类继承自 `BaseEnvironment` 。并在此基础上改写了
 `pyecharts.engine.ECHAERTS_TEMPLATE_FUNCTIONS`
 
 包含模板函数的字典。可用于 web 框架整合。
+
+### 引擎方法
+
+**create_default_environment(filet_ype)**
+
+* file_type: 输出文件类型，有 'html', 'svg', 'png', 'jpeg', 'gif'，'pdf' 可选
+
+为渲染创建一个默认配置环境
+
 
 ### 模板函数
 
@@ -441,7 +474,6 @@ env = EchartsEnvironment(pyecharts_config=config)
 tpl = env.get_template('tpl_demo.html')
 html = tpl.render(bar=bar)
 write_utf8_html_file('my_tpl_demo2.html', html)
-
 ```
 
 tpl_demo.html 模板

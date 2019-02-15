@@ -3,9 +3,10 @@
 from __future__ import unicode_literals
 
 from random import randint
-
-from pyecharts import Bar, Pie, Line, Overlap, Timeline, Style, Map
 from test.constants import CLOTHES
+
+from pyecharts import NULL, Bar, Line, Map, Overlap, Pie, Style, Timeline
+from pyecharts.utils import Passport
 
 
 def test_timeline_bar():
@@ -45,12 +46,12 @@ def test_timeline_bar():
     )
 
     timeline = Timeline(is_auto_play=True, timeline_bottom=0)
-    timeline.add(bar_1, '2012 年')
-    timeline.add(bar_2, '2013 年')
-    timeline.add(bar_3, '2014 年')
-    timeline.add(bar_4, '2015 年')
-    timeline.add(bar_5, '2016 年')
-    assert len(timeline.options.get("baseOption").get("series")) == 0
+    timeline.add(bar_1, "2012 年")
+    timeline.add(bar_2, "2013 年")
+    timeline.add(bar_3, "2014 年")
+    timeline.add(bar_4, "2015 年")
+    timeline.add(bar_5, "2016 年")
+    assert len(timeline._option.get("baseOption").get("series")) == 0
     timeline.render()
 
 
@@ -77,12 +78,12 @@ def test_timeline_pie():
     timeline = Timeline(
         is_auto_play=True, timeline_bottom=0, width=1200, height=600
     )
-    timeline.add(pie_1, '2012 年')
-    timeline.add(pie_2, '2013 年')
-    timeline.add(pie_3, '2014 年')
-    timeline.add(pie_4, '2015 年')
-    timeline.add(pie_5, '2016 年')
-    assert len(timeline.options.get("baseOption").get("series")) == 0
+    timeline.add(pie_1, "2012 年")
+    timeline.add(pie_2, "2013 年")
+    timeline.add(pie_3, "2014 年")
+    timeline.add(pie_4, "2015 年")
+    timeline.add(pie_5, "2016 年")
+    assert len(timeline._option.get("baseOption").get("series")) == 0
     timeline.render()
 
 
@@ -129,11 +130,11 @@ def test_timeline_bar_line():
     overlap_4.add(line_4)
 
     timeline = Timeline(timeline_bottom=0)
-    timeline.add(overlap_0, '1 月')
-    timeline.add(overlap_1, '2 月')
-    timeline.add(overlap_2, '3 月')
-    timeline.add(overlap_3, '4 月')
-    timeline.add(overlap_4, '5 月')
+    timeline.add(overlap_0, "1 月")
+    timeline.add(overlap_1, "2 月")
+    timeline.add(overlap_2, "3 月")
+    timeline.add(overlap_3, "4 月")
+    timeline.add(overlap_4, "5 月")
     timeline.render()
 
 
@@ -146,9 +147,9 @@ def test_timeline_map():
         "",
         attr,
         value,
-        maptype='china',
+        maptype="china",
         is_visualmap=True,
-        visual_text_color='#000',
+        visual_text_color="#000",
         visual_top="30%",
     )
     timeline.add(map, "test1")
@@ -159,13 +160,13 @@ def test_timeline_map():
         "",
         attr,
         value,
-        maptype='china',
+        maptype="china",
         is_visualmap=True,
-        visual_text_color='#000',
+        visual_text_color="#000",
         visual_top="30%",
     )
     timeline.add(map, "test2")
-    assert len(timeline.options.get("baseOption").get("series")) == 2
+    assert len(timeline._option.get("baseOption").get("series")) == 2
     timeline.render()
 
 
@@ -188,8 +189,8 @@ def test_timeline_different_legend():
     )
 
     timeline = Timeline(is_auto_play=True, timeline_bottom=0)
-    timeline.add(bar_1, '2012 年')
-    timeline.add(bar_2, '2013 年')
+    timeline.add(bar_1, "2012 年")
+    timeline.add(bar_2, "2013 年")
     content = timeline._repr_html_()
     assert "\\u6625\\u5b63a" in content  # 春季 a
     assert "\\u6625\\u5b63b" in content  # 春季 b
@@ -202,7 +203,7 @@ def test_timeline_label_color():
         "bar",
         attr,
         [randint(10, 50) for _ in range(6)],
-        label_color=['red', '#213', 'black'],
+        label_color=["red", "#213", "black"],
     )
     line = Line()
     line.add("line", attr, [randint(50, 80) for _ in range(6)])
@@ -219,10 +220,24 @@ def test_timeline_label_color():
     overlap_1.add(line_1)
 
     timeline = Timeline(timeline_bottom=0)
-    timeline.add(overlap_0, '1 月')
-    timeline.add(overlap_1, '2 月')
+    timeline.add(overlap_0, "1 月")
+    timeline.add(overlap_1, "2 月")
     content = timeline._repr_html_()
     assert '"color": [' in content
     assert "red" in content
     assert "#213" in content
     assert "black" in content
+
+
+def test_null_in_timeline_options():
+    bar_1 = Bar("2012 年销量", "数据纯属虚构")
+
+    bar_1.add("春季", CLOTHES, [randint(10, 100) for _ in range(6)])
+    bar_1._option["series"][0]["symbol"] = NULL
+
+    timeline = Timeline(is_auto_play=True, timeline_bottom=0)
+    timeline.add(bar_1, "2012 年")
+
+    assert isinstance(
+        timeline._option["options"][0]["series"][0]["symbol"], Passport
+    )

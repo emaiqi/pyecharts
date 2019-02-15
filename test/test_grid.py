@@ -3,10 +3,20 @@
 from __future__ import unicode_literals
 
 import random
+from test.constants import CLOTHES, WEEK, X_TIME, Y_WEEK
 
-from pyecharts import Bar, Line, Scatter, EffectScatter, Pie, Kline, HeatMap
-from pyecharts import Grid
-from test.constants import X_TIME, Y_WEEK, CLOTHES, WEEK
+from pyecharts import (
+    NULL,
+    Bar,
+    EffectScatter,
+    Grid,
+    HeatMap,
+    Kline,
+    Line,
+    Pie,
+    Scatter,
+)
+from pyecharts.utils import Passport
 
 
 def test_grid_top_bottom():
@@ -128,7 +138,7 @@ def test_grid_line_pie():
         radius=[45, 65],
         center=[65, 50],
         legend_pos="80%",
-        legend_orient='vertical',
+        legend_orient="vertical",
     )
 
     grid = Grid()
@@ -212,7 +222,7 @@ def test_grid_heatmap_bar():
         is_visualmap=True,
         visual_top="45%",
         visual_text_color="#000",
-        visual_orient='horizontal',
+        visual_orient="horizontal",
     )
     v1 = [5, 20, 36, 10, 75, 90]
     v2 = [10, 25, 8, 60, 20, 80]
@@ -294,7 +304,7 @@ def test_grid_multiple_datazoom_index():
 
 
 def test_grid_inverse_yaxis():
-    attr = ['{}天'.format(i) for i in range(1, 31)]
+    attr = ["{}天".format(i) for i in range(1, 31)]
     line_top = Line("折线图示例", width=1200, height=700)
     line_top.add(
         "最高气温",
@@ -302,7 +312,7 @@ def test_grid_inverse_yaxis():
         [random.randint(20, 100) for i in range(30)],
         mark_point=["max", "min"],
         mark_line=["average"],
-        legend_pos='38%',
+        legend_pos="38%",
     )
     line_bottom = Line()
     line_bottom.add(
@@ -312,11 +322,11 @@ def test_grid_inverse_yaxis():
         mark_point=["max", "min"],
         mark_line=["average"],
         is_yaxis_inverse=True,
-        xaxis_pos='top',
+        xaxis_pos="top",
     )
     grid = Grid()
-    grid.add(line_top, grid_bottom='60%')
-    grid.add(line_bottom, grid_top='50%')
+    grid.add(line_top, grid_bottom="60%")
+    grid.add(line_bottom, grid_top="50%")
     grid.render()
 
 
@@ -350,5 +360,17 @@ def test_grid_add_overlap():
     overlap.add(bar)
     overlap.add(line, is_add_yaxis=True, yaxis_index=1)
 
-    grid.add(overlap, grid_right='20%')
+    grid.add(overlap, grid_right="20%")
     grid.render()
+
+
+def test_not_set_in_grid():
+    line = Line("Line")
+    attr = ["A", "B", "C"]
+    line.add("Line1", attr, [1, 2, 3])
+    line._option["series"][0]["symbol"] = NULL
+
+    grid = Grid()
+    grid.add(line, grid_top="10%")
+
+    assert isinstance(grid._option["series"][0]["symbol"], Passport)

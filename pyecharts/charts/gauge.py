@@ -2,6 +2,8 @@
 
 from pyecharts.chart import Chart
 
+DEFAULT_GAUGE_TOOLTIP_FORMATTER = "{a} <br/>{b} : {c}%"
+
 
 class Gauge(Chart):
     """
@@ -13,6 +15,7 @@ class Gauge(Chart):
 
     def add(self, *args, **kwargs):
         self.__add(*args, **kwargs)
+        return self
 
     def __add(
         self, name, attr, value, scale_range=None, angle_range=None, **kwargs
@@ -32,6 +35,8 @@ class Gauge(Chart):
         :param kwargs:
         """
         kwargs.update(type="gauge")
+        if "tooltip_formatter" not in kwargs:
+            kwargs["tooltip_formatter"] = DEFAULT_GAUGE_TOOLTIP_FORMATTER
         _min, _max = 0, 100
         if scale_range:
             if len(scale_range) == 2:
@@ -42,12 +47,12 @@ class Gauge(Chart):
             if len(angle_range) == 2:
                 _start, _end = angle_range
 
-        self._option.get('legend')[0].get('data').append(name)
+        self._option.get("legend")[0].get("data").append(name)
 
-        self._option.get('series').append(
+        self._option.get("series").append(
             {
                 "type": "gauge",
-                "detail": {"formatter": '{value}%'},
+                "detail": {"formatter": "{value}%"},
                 "name": name,
                 "min": _min,
                 "max": _max,
